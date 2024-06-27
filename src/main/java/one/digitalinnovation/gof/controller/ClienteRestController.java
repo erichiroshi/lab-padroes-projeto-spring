@@ -1,6 +1,7 @@
 package one.digitalinnovation.gof.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import java.net.URI;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import one.digitalinnovation.gof.model.Cliente;
 import one.digitalinnovation.gof.service.ClienteService;
@@ -25,8 +27,11 @@ import one.digitalinnovation.gof.service.ClienteService;
 @RequestMapping("clientes")
 public class ClienteRestController {
 
-	@Autowired
 	private ClienteService clienteService;
+
+	public ClienteRestController(ClienteService clienteService) {
+		this.clienteService = clienteService;
+	}
 
 	@GetMapping
 	public ResponseEntity<Iterable<Cliente>> buscarTodos() {
@@ -41,7 +46,8 @@ public class ClienteRestController {
 	@PostMapping
 	public ResponseEntity<Cliente> inserir(@RequestBody Cliente cliente) {
 		clienteService.inserir(cliente);
-		return ResponseEntity.ok(cliente);
+		URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(cliente.getId()).toUri();
+		return ResponseEntity.created(uri).body(cliente);
 	}
 
 	@PutMapping("/{id}")
@@ -53,6 +59,6 @@ public class ClienteRestController {
 	@DeleteMapping("/{id}")
 	public ResponseEntity<Void> deletar(@PathVariable Long id) {
 		clienteService.deletar(id);
-		return ResponseEntity.ok().build();
+		return ResponseEntity.noContent().build();
 	}
 }

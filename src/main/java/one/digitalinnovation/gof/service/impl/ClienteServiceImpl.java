@@ -1,16 +1,15 @@
 package one.digitalinnovation.gof.service.impl;
 
-import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import one.digitalinnovation.gof.model.Cliente;
-import one.digitalinnovation.gof.model.ClienteRepository;
 import one.digitalinnovation.gof.model.Endereco;
-import one.digitalinnovation.gof.model.EnderecoRepository;
+import one.digitalinnovation.gof.repository.ClienteRepository;
+import one.digitalinnovation.gof.repository.EnderecoRepository;
 import one.digitalinnovation.gof.service.ClienteService;
 import one.digitalinnovation.gof.service.ViaCepService;
+import one.digitalinnovation.gof.service.exceptions.ResourceNotFoundException;
 
 /**
  * Implementação da <b>Strategy</b> {@link ClienteService}, a qual pode ser
@@ -23,13 +22,16 @@ import one.digitalinnovation.gof.service.ViaCepService;
 public class ClienteServiceImpl implements ClienteService {
 
 	// Singleton: Injetar os componentes do Spring com @Autowired.
-	@Autowired
 	private ClienteRepository clienteRepository;
-	@Autowired
 	private EnderecoRepository enderecoRepository;
-	@Autowired
 	private ViaCepService viaCepService;
-	
+
+	public ClienteServiceImpl(ClienteRepository clienteRepository, EnderecoRepository enderecoRepository, ViaCepService viaCepService) {
+		this.clienteRepository = clienteRepository;
+		this.enderecoRepository = enderecoRepository;
+		this.viaCepService = viaCepService;
+	}
+
 	// Strategy: Implementar os métodos definidos na interface.
 	// Facade: Abstrair integrações com subsistemas, provendo uma interface simples.
 
@@ -42,8 +44,7 @@ public class ClienteServiceImpl implements ClienteService {
 	@Override
 	public Cliente buscarPorId(Long id) {
 		// Buscar Cliente por ID.
-		Optional<Cliente> cliente = clienteRepository.findById(id);
-		return cliente.get();
+		return clienteRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Cliente não encontrado. Id: " + id));
 	}
 
 	@Override
@@ -54,15 +55,14 @@ public class ClienteServiceImpl implements ClienteService {
 	@Override
 	public void atualizar(Long id, Cliente cliente) {
 		// Buscar Cliente por ID, caso exista:
-		Optional<Cliente> clienteBd = clienteRepository.findById(id);
-		if (clienteBd.isPresent()) {
-			salvarClienteComCep(cliente);
-		}
+		buscarPorId(id);
+		salvarClienteComCep(cliente);
 	}
 
 	@Override
 	public void deletar(Long id) {
 		// Deletar Cliente por ID.
+		buscarPorId(id);
 		clienteRepository.deleteById(id);
 	}
 
